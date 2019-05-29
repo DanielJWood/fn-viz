@@ -22,4 +22,6 @@ $ git add dist && git commit -m "Some commit message"
 $ git subtree push --prefix dist origin gh-pages
 ```
 
+### Credits
+
 Some of the methods (appendselect most importantly) used here were cribbed from the Politico graphic's teams awesome [reusable charts session at NICAR18](https://github.com/The-Politico/nicar18-reusable-charts)
