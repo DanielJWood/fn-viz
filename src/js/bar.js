@@ -17,6 +17,10 @@ export default () => ({
       xAccessor: d => d.year,
       yAccessor: d => d.value,
       labelAccessor: d => d.cat,
+      xTickFormat: null,
+      yTickFormat: null,
+      yTickSteps: null,
+      colorScaleRange: ["#000","#00ff00","#ff0e00"]
     };
 
     function chart(selection) {
@@ -31,9 +35,9 @@ export default () => ({
         const { width } = bbox;
         const { height } = bbox;
         const margins = {
-          top: 25,
+          top: 55,
           right: 30,
-          left: 30,
+          left: 50,
           bottom: 25,
         };
         const innerWidth = width - margins.right - margins.left;
@@ -41,6 +45,7 @@ export default () => ({
         const parseYear = d3.timeParse('%Y');
 
         // Normalize data
+        // array of array because you might have more than one series (multiple line chart)
         const normData = data.map(arr => arr.map(d => ({
           x: props.xAccessor(d),
           y: props.yAccessor(d),
@@ -49,49 +54,50 @@ export default () => ({
 
         // Calculate the extent (min/max) of our data
         // for both our x and y axes;
-        const xExtent = d3.extent(
-          _.flatten(normData.map(arr => d3.extent(arr, d => parseYear(d.x)))),
-          d => d,
-        );
+        // const xExtent = d3.extent(
+        //   _.flatten(normData.map(arr => d3.extent(arr, d => parseYear(d.x)))),
+        //   d => d,
+        // );
         const yExtent = d3.extent(
-          _.flatten(normData.map(arr => d3.extent(arr, d => d.y))),
+          _.flatten(normData.map(arr => [0,d3.max(arr, d => d.y)])),
           d => d,
         );
 
         // If an extent is not provided as a prop, default to the min/max of our data
-        const xScale = d3.scaleTime()
-          .domain(xExtent)
-          .range([0, innerWidth]);
+        // const xScale = d3.scaleTime()
+        //   .domain(xExtent)
+        //   .range([0, innerWidth]);
+
+        const xScale = d3.scaleBand()
+          .range([0, innerWidth])
+          .padding(.05);
+
+        xScale.domain(normData[0].map(function(d) { return d.x;}))
 
         const yScale = d3.scaleLinear()
           .domain(yExtent)
           .range([innerHeight, 0])
           .nice();
 
-        const colorScale = d3.scaleOrdinal()
-          .domain(_.flatten(normData.map(arr => arr.map(d => d.label))))
-          .range(d3.schemeCategory10);
+        // const colorScale = d3.scaleOrdinal()
+        //   .domain(_.flatten(normData.map(arr => arr.map(d => d.label))))
+        //   .range(props.colorScaleRange);
 
         // Axes
         const xAxis = d3.axisBottom(xScale)
+          .tickFormat(props.xTickFormat)
           .tickPadding(0);
 
         const yAxis = d3.axisLeft(yScale)
+          .tickFormat(props.yTickFormat)
           .tickSize(-innerWidth - margins.left)
+          .tickValues(props.yTickSteps)
           .tickPadding(0);
-
-        const line = d3.line()
-          .x(d => xScale(parseYear(d.x)))
-          .y(d => yScale(d.y));
 
         // Now, let's create our svg element using appendSelect!
         // appendSelect will either append an element that doesn't exist yet
         // or select one that already does. This is useful for making this
-        // function idempotent. Use it this way:
-        //
-        // selection.appendSelect(<element selector>, <class string>)
-        //
-        // You can also chain calls like below:
+        // function idempotent.         
         const g = d3.select(this)
           .appendSelect('svg')
           .attr('width', width)
@@ -107,16 +113,60 @@ export default () => ({
           .attr('transform', `translate(0,${innerHeight})`)
           .call(xAxis);
 
-        // Add our lines data
-        const lines = g.selectAll('path.line')
-          .data(normData);
+        const tool = g.appendSelect("text","tooltip")
+            .attr("fill", "#000")
+            .attr("id","det")
+            .attr("class","tooltip")
+            .attr("y", -100)
+            .attr("x",-100)
+            .attr("text-anchor", "start")
+            .text("");    
 
-        lines.enter()
-          .append('path')
-          .attr('class', 'line')
-          .merge(lines)
-          .attr('d', line)
-          .style('stroke', (arr, i) => colorScale((arr[i].label)));
+        // Add our bars data
+        // call normData[0] because only one group of bar charts. 
+        // If there are more bar groups of bars, run a for each for the normData
+
+        const bars = g.selectAll('.bar')
+          .data(normData[0]);
+
+        bars.exit().remove();
+
+        bars.enter().append("rect")
+          .attr("class", "bar")
+          .merge(bars)
+          .transition().duration(1000)
+          .attr("x", function(d) { return xScale(d.x); })
+          .attr("width", xScale.bandwidth())
+          .attr("y", function(d) { return yScale(d.y); })
+          .attr("height", function(d) { return innerHeight - yScale(d.y); })
+
+          bars.on("mouseover",function(d){   
+            d3.select(this)
+              .style('fill','#ff00ff')
+
+            g.select('text.tooltip')
+              .attr("y", -20)
+              .attr("x",0)
+              .text(`${d.x} has been tagged ${d.y} times`);    
+          })
+          .on("mouseout",function(d){
+            d3.select(this)
+              .style('fill','#ff99ff')
+          })        
+
+
+
+        if (props.reorder) {          
+          console.log("reorder")
+          
+          normData[0].sort((a,b) => (b.y - a.y))
+          xScale.domain(normData[0].map(function(d) { return d.x;}))
+          bars.enter().append("rect")
+          .attr("class", "bar")
+          .merge(bars)
+          .transition().delay(1000).duration(1000)
+          .attr("x", function(d) { return xScale(d.x); })
+        }
       });
     }
 
@@ -158,7 +208,8 @@ export default () => ({
   },
 
   // Method that is useful for updating our chart with new data.
-  update(data) {
+  update(data,props) {
+    this._props = props;
     this._data = data;
     this.draw();
   },

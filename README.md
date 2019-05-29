@@ -1,5 +1,3 @@
-# NICAR 2018 Reusable charts session
-
 ## Using the repo
 
 ### Development

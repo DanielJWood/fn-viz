@@ -1,19 +1,148 @@
-$lineChart-container: '#single-line-chart, #multiple-line-chart';
+$green: lighten(#00ff80,30%);
+$pink: lighten(#ff00ff,30%);
 
-#{$lineChart-container} {
-  font-family: helvetica;
+$lineChart-container: '#single-line-chart, #multiple-line-chart';
+body {
+  font-family: 'Roboto Slab', serif;
+  // font-family: 'Open Sans', sans-serif;  
+}
+
+
+
+
+h1,h2,h3 {
+  font-family: 'Roboto Slab', serif;
+}
+
+.footer {
+  padding-top:40px;
+  color: #696969
+}
+
+#header {
+  text-align:center;
+
+  h1,h2,h3 {
+    padding: 0px;
+    margin: 0px;
+  }
   h3 {
+    padding-bottom: 10px;
+  }
+
+
+}
+
+#context {
+  padding-left: 100px;
+  padding-right: 100px;
+}
+
+#lineCharts {
+  // display: none;
+  // height: 0;
+  overflow: hidden;
+  opacity: 0;
+  -webkit-transition: opacity 2s ease-in;
+  -moz-transition: opacity 2s ease-in;
+  -o-transition: opacity 2s ease-in;
+  -ms-transition: opacity 2s ease-in;
+  transition: opacity 2s ease-in;
+
+  &.active {
+    overflow: visible;
+    // display: block;
+    // height: unset;
+    opacity: 1;        
+  }
+}
+
+.subheader {
+  text-align: center;
+  margin-top: 50px;
+  // height: 450px;
+
+  .button {
+    padding:5px 10px;    
+    border-radius: 5px;
+    background-color: $green;
+    display: inline;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  h4 {
+    display: inline;
+    font-size: 30px;
+    padding-left: 20px;
+    padding-right:20px;
+  }
+}
+
+/* #{$lineChart-container} {*/
+.chart {
+  
+  .title {
     text-align: center;
+    height: 50px;
   }
-  width: 100%;
-  max-width:600px;
-  height: 400px;
-  @media screen and (max-width: 450px) {
-      height:250px;
+
+  span.green {
+    background-color: lighten(#00ff80,30%);
   }
+
+  span.pink {
+    background-color: lighten(#ff00ff,30%);
+  }
+  
+  // width: 100%;
+  // max-width:500px;
+  width: 50%;
+  height: 300px;
+  float: left;
+  
+  &.large {
+    width: 50%;
+    // height: 500px;
+  }
+  
+  &.full {
+    width: 100%;
+    height: 500px;
+
+    .x.axis {
+      path {
+        display: none;
+        // display: block;
+        // stroke-width: 2px;
+        // stroke: #333;
+      }
+    }
+
+  }
+
+  circle {
+    cursor: pointer;
+  }
+
+  @media screen and (max-width: 700px) {
+      width: 50%;
+      height: 300px;
+  }
+
+  @media screen and (max-width: 400px) {
+      width: 100%;
+      height: 300px;
+  }
+
+  .bar {
+    fill: $pink;
+    cursor: pointer;
+  }
+
   path {
     fill: none;
-    stroke-width: 3px;
+    stroke-width: 2px;
   }
   .axis {
     path {
@@ -23,13 +152,19 @@ $lineChart-container: '#single-line-chart, #multiple-line-chart';
       font-size: 13px;
       fill: grey;
     }
+
+    &.x.axis {
+      text {
+        
+      }
+    }
     &.x line {
       display: none;
     }
     &.y {
       text {
         text-anchor:end;
-        transform:translate(0px,-10px);
+        // transform:translate(0px,-10px);
       }
       line {
         stroke: lightgrey;
@@ -39,6 +174,18 @@ $lineChart-container: '#single-line-chart, #multiple-line-chart';
   }
 }
 
+.x.axis {
+  text {
+    display: none;    
+  }
+}
+
+.line .x.axis {
+  text {
+    display: inline;    
+  }
+}
+
 #multiple-line-chart {
-  margin-top: 80px;
+  // margin-top: 80px;
 }

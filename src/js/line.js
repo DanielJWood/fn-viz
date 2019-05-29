@@ -13,6 +13,7 @@ export default () => ({
     // This is our props object.
     // We set default chart properties in this object that users can overwrite
     // with a props object when they call their chart (We will do this in app.js).
+
     let props = {
       xAccessor: d => d.year,
       yAccessor: d => d.value,
@@ -20,6 +21,7 @@ export default () => ({
       xTickFormat: null,
       yTickFormat: null,
       yTickSteps: null,
+      colorScaleRange: ["#000","#00ff00","#ff0e00"]
     };
 
     function chart(selection) {
@@ -29,26 +31,28 @@ export default () => ({
         // And pass our chart data.
 
         // "this" refers to the selection
-        // bbox is a convenient way to return your element's width and height
+        // bbox is a convenient way to return your element's width and height        
+
         const bbox = this.getBoundingClientRect();
         const { width } = bbox;
         const { height } = bbox;
         const margins = {
           top: 25,
-          right: 30,
-          left: 30,
-          bottom: 25,
+          right: 20,
+          left: 40,
+          bottom: 75,
         };
         const innerWidth = width - margins.right - margins.left;
         const innerHeight = height - margins.top - margins.bottom;
         const parseYear = d3.timeParse('%Y');
+
 
         // Normalize data
         const normData = data.map(arr => arr.map(d => ({
           x: props.xAccessor(d),
           y: props.yAccessor(d),
           label: props.labelAccessor(d),
-        })));
+        })));   
 
         // Calculate the extent (min/max) of our data
         // for both our x and y axes;
@@ -56,39 +60,40 @@ export default () => ({
           _.flatten(normData.map(arr => d3.extent(arr, d => parseYear(d.x)))),
           d => d,
         );
+
         const yExtent = d3.extent(
-          _.flatten(normData.map(arr => d3.extent(arr, d => d.y))),
+          _.flatten(normData.map(arr => [0,d3.max(arr, d => d.y)])),
           d => d,
         );
+
 
         // If an extent is not provided as a prop, default to the min/max of our data
         const xScale = d3.scaleTime()
           .domain(xExtent)
-          .range([0, innerWidth]);
-
-        const yScale = d3.scaleLinear()
-          .domain(yExtent)
-          .range([innerHeight, 0])
+          .range([0, innerWidth])
           .nice();
 
-        const colorScale = d3.scaleOrdinal()
-          .domain(_.flatten(normData.map(arr => arr.map(d => d.label))))
-          .range(d3.schemeCategory10);
+        const yScale = d3.scaleLinear()
+          .domain([0,60])
+          .range([innerHeight, 0])
+          .nice();
 
         // Axes
         const xAxis = d3.axisBottom(xScale)
           .tickFormat(props.xTickFormat)
-          .tickPadding(0);
+          .tickPadding(5)
+          .ticks(5);
 
         const yAxis = d3.axisLeft(yScale)
           .tickFormat(props.yTickFormat)
-          .tickSize(-innerWidth - margins.left)
+          .tickSize(-innerWidth)
           .tickValues(props.yTickSteps)
-          .tickPadding(0);
+          .tickPadding(20);
 
         const line = d3.line()
           .x(d => xScale(parseYear(d.x)))
           .y(d => yScale(d.y));
+
 
         // Now, let's create our svg element using appendSelect!
         // appendSelect will either append an element that doesn't exist yet
@@ -107,7 +112,27 @@ export default () => ({
 
         g.appendSelect('g', 'y axis')
           .attr('transform', 'translate(0, 0)')
-          .call(yAxis);
+          .call(yAxis)
+          
+        // g.appendSelect("text","label")
+        //     .attr("fill", "#000")
+        //     .attr("transform", "rotate(-90)")
+        //     .attr("y", -50)
+        //     .attr("x",`-${innerHeight}`)
+        //     .attr("dy", "0.4em")
+        //     .attr("text-anchor", "start")
+        //     .text("←" + props.y2Name());
+     
+        // console.log()
+
+        // g.appendSelect("text","label2")
+        //     .attr("fill", "#000")
+        //     .attr("transform", "rotate(-90)")
+        //     .attr("y", -50)
+        //     .attr("x",10)
+        //     .attr("dy", "0.4em")
+        //     .attr("text-anchor", "end")
+        //     .text(props.yName() + "→");            
 
         g.appendSelect('g', 'x axis')
           .attr('transform', `translate(0,${innerHeight})`)
@@ -122,7 +147,7 @@ export default () => ({
           .attr('class', 'line')
           .merge(lines)
           .attr('d', line)
-          .style('stroke', (arr, i) => colorScale((arr[i].label)));
+          .style('stroke', (arr, i) => "#ff00ff");
       });
     }
 
@@ -133,7 +158,6 @@ export default () => ({
     chart.props = (obj) => {
       if (!obj) return props;
       props = Object.assign(props, obj);
-      // console.log(props);
       return chart;
     };
     // Here's where we return our chart function
